@@ -11,8 +11,8 @@ case "$path" in
 esac
 [[ -f "$path" ]] || exit 0
 
-bytes=$(wc -c < "$path" | tr -d '[:space:]')
-(( bytes > 204800 )) || exit 0
+bytes=$(wc -c <"$path" | tr -d '[:space:]')
+((bytes > 204800)) || exit 0
 
 jq -n --arg path "$path" --argjson bytes "$bytes" \
   '{hookSpecificOutput:{hookEventName:"PreToolUse",permissionDecision:"deny",permissionDecisionReason:("Do not Read " + $path + " (" + ($bytes|tostring) + " bytes). Use the sarif-parsing helper summary/filter/dedupe/diff commands for compact output; inspect a specific record only after narrowing it.")}}'
