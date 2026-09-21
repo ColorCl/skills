@@ -17,7 +17,7 @@ Pitfalls and edge cases when generating Mermaid from code graph data.
 Trailmark node IDs use `module:Class.method` format. Mermaid node IDs
 only allow `[a-zA-Z0-9_]`.
 
-**Rules applied by `diagram.py`:**
+**Rules applied by Trailmark's diagram command:**
 - Replace any non-alphanumeric character (except `_`) with `_`
 - Prefix with `n_` if the result starts with a digit
 
@@ -56,7 +56,7 @@ flowchart TB
     classDef high fill:rgba(220,53,69,0.2),stroke:#dc3545,color:#dc3545
 ```
 
-The script defines three classes for complexity heatmaps:
+The command defines three classes for complexity heatmaps:
 - `low` (green): CC < 5
 - `medium` (yellow): CC 5-10
 - `high` (red): CC > 10
@@ -91,14 +91,14 @@ names matching reserved words can still collide. Workaround: use the full
 qualified ID which includes the module prefix.
 
 **Leading digits:** Mermaid node IDs cannot start with a digit. The
-script prefixes `n_` in this case.
+command prefixes `n_` in this case.
 
-**Diagram size:** Mermaid renderers struggle with >100 nodes. The script
+**Diagram size:** Mermaid renderers struggle with >100 nodes. The command
 warns when this limit is exceeded and suggests using `--focus` to scope
 the diagram.
 
 **Empty diagrams:** When no edges of the required type exist (e.g., no
-`inherits` edges in a Go codebase), the script emits a single-node
+`inherits` edges in a Go codebase), the command emits a single-node
 diagram with an explanatory message rather than failing.
 
 **Parentheses in labels:** Mermaid interprets `()` as rounded-rectangle

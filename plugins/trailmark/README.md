@@ -82,7 +82,7 @@ trailmark/
     ├── trailmark/                    # Core graph querying
     ├── slicing-code-context/         # Bounded source slicing and worker delegation
     ├── diagramming-code/             # Mermaid diagram generation
-    │   └── scripts/diagram.py
+    │   └── scripts/diagram.py        # Legacy compatibility wrapper
     ├── crypto-protocol-diagram/      # Protocol flow extraction
     │   └── examples/
     ├── genotoxic/                    # Mutation testing triage

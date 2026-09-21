@@ -39,10 +39,10 @@ flowchart TB
     query_api_QueryEngine_paths_between --> storage_graph_store_GraphStore_find_node_id
 ```
 
-**Script invocation:**
+**Command:**
 
 ```bash
-uv run {baseDir}/scripts/diagram.py \
+trailmark diagram \
     --target {targetDir} --type call-graph \
     --focus QueryEngine --depth 2
 ```
@@ -57,7 +57,7 @@ relationships between classes, structs, interfaces, and traits.
 **Mermaid type:** `classDiagram`
 
 **Limitations:** Languages without class inheritance (e.g., Go, C) produce
-empty diagrams. The script emits a note node in that case.
+empty diagrams. The command emits a note node in that case.
 
 **Example output:**
 
@@ -72,10 +72,10 @@ classDiagram
     models_nodes_CodeUnit <|-- models_nodes_Parameter
 ```
 
-**Script invocation:**
+**Command:**
 
 ```bash
-uv run {baseDir}/scripts/diagram.py \
+trailmark diagram \
     --target {targetDir} --type class-hierarchy
 ```
 
@@ -100,10 +100,10 @@ flowchart LR
     storage_graph_store --> models_nodes
 ```
 
-**Script invocation:**
+**Command:**
 
 ```bash
-uv run {baseDir}/scripts/diagram.py \
+trailmark diagram \
     --target {targetDir} --type module-deps --direction LR
 ```
 
@@ -127,10 +127,10 @@ classDiagram
     }
 ```
 
-**Script invocation:**
+**Command:**
 
 ```bash
-uv run {baseDir}/scripts/diagram.py \
+trailmark diagram \
     --target {targetDir} --type containment
 ```
 
@@ -160,10 +160,10 @@ flowchart TB
     classDef high fill:rgba(220,53,69,0.2),stroke:#dc3545,color:#dc3545
 ```
 
-**Script invocation:**
+**Command:**
 
 ```bash
-uv run {baseDir}/scripts/diagram.py \
+trailmark diagram \
     --target {targetDir} --type complexity --threshold 5
 ```
 
@@ -176,7 +176,7 @@ functions. Entrypoints are styled distinctly (rounded rectangles, blue).
 
 **Mermaid type:** `flowchart`
 
-Without `--focus`, the script targets the top 10 complexity hotspots
+Without `--focus`, the command targets the top 10 complexity hotspots
 reachable from entrypoints. With `--focus`, it shows all paths from
 entrypoints to the specified function.
 
@@ -192,15 +192,15 @@ flowchart TB
     classDef entrypoint fill:rgba(0,123,255,0.2),stroke:#007bff,color:#007bff
 ```
 
-**Script invocation:**
+**Command:**
 
 ```bash
 # Focus on a specific sensitive function
-uv run {baseDir}/scripts/diagram.py \
+trailmark diagram \
     --target {targetDir} --type data-flow \
     --focus execute_query
 
 # Auto-detect: entrypoints to top complexity hotspots
-uv run {baseDir}/scripts/diagram.py \
+trailmark diagram \
     --target {targetDir} --type data-flow
 ```
