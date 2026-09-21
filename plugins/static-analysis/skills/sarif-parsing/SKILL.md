@@ -1,5 +1,5 @@
 ---
-name: sarif-parsing-updated-benchmark
+name: sarif-parsing
 description: >-
   Read, filter, deduplicate, compare, and export SARIF findings from CodeQL, Semgrep, and
   other scanners. Use for SARIF scan results, severity counts, finding filters, alert
