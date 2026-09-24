@@ -345,3 +345,93 @@ load test_helper
   run_curl_hook "$(printf 'cat <<A > x; cat <<B > y\ncurl https://api.github.com/repos/owner/repo/pulls\nA\nB')"
   assert_deny
 }
+
+# =============================================================================
+# Deny: the fetch is a GitHub one, but not spelled the way a literal match
+# expects. Every host form below was verified to return real content.
+# =============================================================================
+
+@test "curl: denies curl inside command substitution" {
+  run_curl_hook 'ver=$(curl -s https://api.github.com/repos/cli/cli/releases/latest)'
+  assert_deny
+}
+
+@test "curl: denies curl inside a quoted -c argument" {
+  run_curl_hook 'bash -c "curl -s https://api.github.com/repos/owner/repo/pulls"'
+  assert_deny
+}
+
+@test "curl: denies curl invoked by absolute path" {
+  run_curl_hook '/usr/bin/curl -s https://api.github.com/repos/owner/repo/pulls'
+  assert_deny
+}
+
+@test "curl: denies curl inside backtick substitution" {
+  run_curl_hook 'for u in `curl -s https://api.github.com/repos/owner/repo/issues`; do :; done'
+  assert_deny
+}
+
+@test "curl: denies wget2" {
+  run_curl_hook 'wget2 -qO- https://api.github.com/repos/owner/repo/pulls'
+  assert_deny
+}
+
+@test "curl: denies an uppercase GitHub host" {
+  run_curl_hook 'curl -s https://API.GITHUB.COM/repos/owner/repo/pulls'
+  assert_deny
+}
+
+@test "curl: denies codeload.github.com" {
+  run_curl_hook 'curl -sL https://codeload.github.com/owner/repo/tar.gz/main'
+  assert_deny
+}
+
+@test "curl: denies www.github.com" {
+  run_curl_hook 'curl -sL https://www.github.com/owner/repo/archive/main.tar.gz'
+  assert_deny
+}
+
+@test "curl: denies gist.githubusercontent.com" {
+  run_curl_hook 'curl -s https://gist.githubusercontent.com/owner/abc/raw/f.txt'
+  assert_deny
+}
+
+@test "curl: denies a host with a trailing dot" {
+  run_curl_hook 'curl -s https://github.com./owner/repo/issues/1'
+  assert_deny
+}
+
+@test "curl: denies a schemeless GitHub URL" {
+  run_curl_hook 'curl -sL github.com/owner/repo/archive/main.tar.gz -o m.tgz'
+  assert_deny
+}
+
+@test "curl: denies a host held in a shell variable" {
+  run_curl_hook 'H=api.github.com; curl -s https://$H/repos/owner/repo/pulls'
+  assert_deny
+}
+
+@test "curl: denies a brace-globbed host" {
+  run_curl_hook 'curl -s https://api.github.{com}/repos/owner/repo/pulls'
+  assert_deny
+}
+
+@test "curl: denies a percent-encoded host" {
+  run_curl_hook 'curl -s https://api%2Egithub%2Ecom/repos/owner/repo/pulls'
+  assert_deny
+}
+
+@test "curl: denies a heredoc fed to a shell that executes it" {
+  run_curl_hook "$(printf 'bash <<SH\ncurl -s https://api.github.com/repos/owner/repo/pulls\nSH')"
+  assert_deny
+}
+
+@test "curl: still allows a heredoc that only writes the body to a file" {
+  run_curl_hook "$(printf 'cat > s.sh <<SH\ncurl -s https://api.github.com/repos/owner/repo/pulls\nSH')"
+  assert_allow
+}
+
+@test "curl: a GitHub Enterprise host containing 'github' is still allowed" {
+  run_curl_hook 'curl -s https://github.enterprise.internal/api/v3/repos/owner/repo/pulls'
+  assert_allow
+}
