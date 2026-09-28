@@ -102,11 +102,30 @@ scrubbed=$(printf '%s\n' "$cmd" | awk '
     # More than one heredoc opened on a line needs a delimiter queue. Rather
     # than half-track it, bail out and let the caller scan the raw command.
     if (gsub(/<<-?[[:space:]]*['\''"]?[A-Za-z_]/, "&", probe) > 1) { exit 3 }
-    # `cat > f <<EOF` WRITES the body; `bash <<EOF` EXECUTES it. Stripping
-    # both let a heredoc-fed shell fetch anything. If the command word is an
-    # interpreter, keep the body and scan it.
-    runs_body = (line ~ /^[[:space:]]*(sudo[[:space:]]+)?(env[[:space:]]+)?(bash|sh|zsh|ksh|dash|python3?|perl|ruby|node)([[:space:]]|$)/)
-    if (!runs_body && match(line, /<<-?[[:space:]]*['\''"]?[A-Za-z_][A-Za-z0-9_]*/)) {
+    # `cat > f <<EOF` WRITES the body; `bash <<EOF` EXECUTES it. Only the
+    # first may be dropped from the scan.
+    #
+    # Deciding this by recognising interpreters does not hold up — the
+    # interpreter can be reached by absolute path (/bin/bash), hidden behind a
+    # wrapper (env X=1 bash), or not be the command word at all
+    # (cat <<SH | bash). Any such list is a list of the forms someone happened
+    # to think of.
+    #
+    # So the test is inverted: strip only the narrow shapes that are positively
+    # recognised as authoring a file, and keep the body for everything else.
+    # An unrecognised form is scanned rather than ignored, which is the safe
+    # direction. A pipeline disqualifies the line outright, since a pipe can
+    # hand the body to an interpreter no matter what the command word is.
+    writes_body = 0
+    if (line !~ /\|/) {
+      #  cat > f <<EOF   /  cat >> f <<EOF
+      if (line ~ /^[[:space:]]*cat[[:space:]]+>>?[[:space:]]*[^[:space:]<>|]+[[:space:]]*<</) writes_body = 1
+      #  cat <<EOF > f   (redirect trailing the marker)
+      else if (line ~ /^[[:space:]]*cat[[:space:]]*<<[^[:space:]<>|]+[[:space:]]*>>?[[:space:]]*[^[:space:]<>|]+[[:space:]]*$/) writes_body = 1
+      #  tee f <<EOF     /  tee -a f <<EOF
+      else if (line ~ /^[[:space:]]*tee[[:space:]]+(-a[[:space:]]+)?[^[:space:]<>|]+[[:space:]]*<</) writes_body = 1
+    }
+    if (writes_body && match(line, /<<-?[[:space:]]*['\''"]?[A-Za-z_][A-Za-z0-9_]*/)) {
       tag = substr(line, RSTART, RLENGTH)
       gsub(/^<<-?[[:space:]]*['\''"]?/, "", tag)
       delim = tag; inhd = 1

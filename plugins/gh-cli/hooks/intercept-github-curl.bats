@@ -435,3 +435,61 @@ load test_helper
   run_curl_hook 'curl -s https://github.enterprise.internal/api/v3/repos/owner/repo/pulls'
   assert_allow
 }
+
+# =============================================================================
+# Heredoc bodies: only a recognised authoring form may be dropped
+#
+# Deciding this by naming interpreters does not hold up — the interpreter can
+# arrive by absolute path, behind a wrapper, or through a pipe where it is not
+# the command word at all. These pin the wrapper and pipeline forms.
+# =============================================================================
+
+@test "curl: denies a heredoc fed to an interpreter by absolute path" {
+  run_curl_hook "$(printf '/bin/bash <<SH\ncurl -s https://api.github.com/repos/owner/repo/pulls\nSH')"
+  assert_deny
+}
+
+@test "curl: denies a heredoc fed to an interpreter behind env" {
+  run_curl_hook "$(printf 'env X=1 bash <<SH\ncurl -s https://api.github.com/repos/owner/repo/pulls\nSH')"
+  assert_deny
+}
+
+@test "curl: denies a heredoc piped to an interpreter" {
+  run_curl_hook "$(printf 'cat <<SH | bash\ncurl -s https://api.github.com/repos/owner/repo/pulls\nSH')"
+  assert_deny
+}
+
+@test "curl: denies a heredoc piped to an interpreter via sudo" {
+  run_curl_hook "$(printf 'cat <<SH | sudo bash\ncurl -s https://api.github.com/repos/owner/repo/pulls\nSH')"
+  assert_deny
+}
+
+@test "curl: denies a heredoc fed to sh -s" {
+  run_curl_hook "$(printf 'sh -s <<SH\ncurl -s https://api.github.com/repos/owner/repo/pulls\nSH')"
+  assert_deny
+}
+
+@test "curl: denies a heredoc fed to an interpreter behind sudo" {
+  run_curl_hook "$(printf 'sudo bash <<SH\ncurl -s https://api.github.com/repos/owner/repo/pulls\nSH')"
+  assert_deny
+}
+
+@test "curl: allows cat appending a heredoc to a file" {
+  run_curl_hook "$(printf 'cat >> s.sh <<EOF\ncurl -s https://api.github.com/repos/owner/repo/pulls\nEOF')"
+  assert_allow
+}
+
+@test "curl: allows cat with the redirect trailing the heredoc marker" {
+  run_curl_hook "$(printf 'cat <<EOF > s.sh\ncurl -s https://api.github.com/repos/owner/repo/pulls\nEOF')"
+  assert_allow
+}
+
+@test "curl: allows tee writing a heredoc to a file" {
+  run_curl_hook "$(printf 'tee s.sh <<EOF\ncurl -s https://api.github.com/repos/owner/repo/pulls\nEOF')"
+  assert_allow
+}
+
+@test "curl: allows tee -a writing a heredoc to a file" {
+  run_curl_hook "$(printf 'tee -a s.sh <<EOF\ncurl -s https://api.github.com/repos/owner/repo/pulls\nEOF')"
+  assert_allow
+}
